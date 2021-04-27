@@ -162,7 +162,7 @@ impl CppCodeGenerator {
 
     fn generate_string_constructor(&mut self) {
         let declaration = indoc! {"
-        inline std::unique_ptr<std::string> make_string(::rust::Str str)
+        inline std::unique_ptr<std::string> autocxx_make_string(::rust::Str str)
         { return std::make_unique<std::string>(std::string(str)); }
         "};
         let declaration = Some(declaration.into());

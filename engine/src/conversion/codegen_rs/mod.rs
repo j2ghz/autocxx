@@ -76,21 +76,21 @@ fn get_string_items() -> Vec<Item> {
         Item::Impl(parse_quote! {
             impl ToCppString for &str {
                 fn into_cpp(self) -> cxx::UniquePtr<cxx::CxxString> {
-                    cxxbridge::make_string(self)
+                    cxxbridge::autocxx_make_string(self)
                 }
             }
         }),
         Item::Impl(parse_quote! {
             impl ToCppString for String {
                 fn into_cpp(self) -> cxx::UniquePtr<cxx::CxxString> {
-                    cxxbridge::make_string(&self)
+                    cxxbridge::autocxx_make_string(&self)
                 }
             }
         }),
         Item::Impl(parse_quote! {
             impl ToCppString for &String {
                 fn into_cpp(self) -> cxx::UniquePtr<cxx::CxxString> {
-                    cxxbridge::make_string(self)
+                    cxxbridge::autocxx_make_string(self)
                 }
             }
         }),
@@ -381,7 +381,7 @@ impl<'a> RsCodeGenerator<'a> {
         match api_detail {
             ApiDetail::StringConstructor => RsCodegenResult {
                 extern_c_mod_item: Some(ForeignItem::Fn(parse_quote!(
-                    fn make_string(str_: &str) -> UniquePtr<CxxString>;
+                    fn autocxx_make_string(str_: &str) -> UniquePtr<CxxString>;
                 ))),
                 bridge_items: Vec::new(),
                 global_items: get_string_items(),

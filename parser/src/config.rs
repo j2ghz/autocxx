@@ -125,7 +125,7 @@ impl Parse for IncludeCppConfig {
             }
         }
         if !exclude_utilities {
-            type_config.add_to_allowlist("make_string".to_string());
+            type_config.add_to_allowlist("autocxx_make_string".into());
         }
 
         Ok(IncludeCppConfig {

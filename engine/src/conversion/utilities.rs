@@ -27,7 +27,7 @@ pub(crate) fn generate_utilities(apis: &mut Vec<UnanalyzedApi>) {
     // and we always generate an additional C++ file for our bindings additions,
     // unless the include_cpp macro has specified ExcludeUtilities.
     apis.push(UnanalyzedApi {
-        name: QualifiedName::new(&Namespace::new(), make_ident("make_string")),
+        name: QualifiedName::new(&Namespace::new(), make_ident("autocxx_make_string")),
         deps: HashSet::new(),
         detail: super::api::ApiDetail::StringConstructor,
     });
