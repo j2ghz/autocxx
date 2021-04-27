@@ -283,6 +283,16 @@ macro_rules! generate_pod {
     ($($tt:tt)*) => { $crate::usage!{$($tt)*} };
 }
 
+/// Generate Rust bindings for all C++ types and functions
+/// found. Highly experimental and not recommended.
+/// A directive to be included inside
+/// [include_cpp] - see [include_cpp] for general information.
+/// See also [generate].
+#[macro_export]
+macro_rules! generate_all {
+    ($($tt:tt)*) => { $crate::usage!{$($tt)*} };
+}
+
 /// Skip the normal generation of a `make_string` function
 /// and other utilities which we might generate normally.
 /// A directive to be included inside

@@ -12,13 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/// Allowlist configuration.
+#[derive(Hash, Debug)]
+pub enum Allowlist {
+    Unspecified,
+    All,
+    Specific(Vec<String>),
+}
+
+impl Default for Allowlist {
+    fn default() -> Self {
+        Allowlist::Unspecified
+    }
+}
+
 /// Configuration about types.
 /// At present this is very minimal; in future we should roll
 /// known_types.rs into this and possibly other things as well.
 #[derive(Default, Hash, Debug)]
 pub struct TypeConfig {
     pub(crate) pod_requests: Vec<String>,
-    pub(crate) allowlist: Vec<String>,
+    pub(crate) allowlist: Allowlist,
     pub(crate) blocklist: Vec<String>,
     pub(crate) exclude_utilities: bool,
 }
@@ -41,15 +55,34 @@ impl TypeConfig {
         self.exclude_utilities
     }
 
-    pub fn allowlist(&self) -> impl Iterator<Item = String> + '_ {
-        self.allowlist
-            .iter()
-            .map(|s| s.to_string())
-            .chain(self.active_utilities().iter().map(|s| s.to_string()))
+    /// Items which the user has explicitly asked us to generate;
+    /// we should raise an error if we weren't able to do so.
+    pub fn must_generate_list(&self) -> Box<dyn Iterator<Item = String> + '_> {
+        if let Allowlist::Specific(items) = &self.allowlist {
+            Box::new(items.iter().chain(self.pod_requests.iter()).cloned())
+        } else {
+            Box::new(self.pod_requests.iter().cloned())
+        }
     }
 
-    pub fn allowlist_is_empty(&self) -> bool {
-        self.allowlist.is_empty()
+    /// The allowlist of items to be passed into bindgen, if any.
+    pub fn bindgen_allowlist(&self) -> Option<Box<dyn Iterator<Item = String> + '_>> {
+        match &self.allowlist {
+            Allowlist::All => None,
+            Allowlist::Unspecified if self.pod_requests.is_empty() => None,
+            Allowlist::Unspecified => {
+                Some(Box::new(self.pod_requests.iter().cloned().chain(
+                    self.active_utilities().iter().map(|s| s.to_string()),
+                )))
+            }
+            Allowlist::Specific(items) => Some(Box::new(
+                items
+                    .iter()
+                    .chain(self.pod_requests.iter())
+                    .cloned()
+                    .chain(self.active_utilities().iter().map(|s| s.to_string())),
+            )),
+        }
     }
 
     fn active_utilities(&self) -> &'static [&'static str] {
@@ -69,8 +102,13 @@ impl TypeConfig {
     /// This second pass may seem redundant. But sometimes bindgen generates
     /// unnecessary stuff.
     pub fn is_on_allowlist(&self, cpp_name: &str) -> bool {
-        self.allowlist.iter().any(|item| item == cpp_name)
-            || self.active_utilities().iter().any(|item| *item == cpp_name)
+        match self.bindgen_allowlist() {
+            None => true,
+            Some(mut items) => {
+                items.any(|item| item == cpp_name)
+                    || self.active_utilities().iter().any(|item| *item == cpp_name)
+            }
+        }
     }
 
     pub fn is_on_blocklist(&self, cpp_name: &str) -> bool {

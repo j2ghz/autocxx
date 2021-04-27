@@ -19,7 +19,7 @@ use syn::{
     Token,
 };
 
-use crate::type_config::TypeConfig;
+use crate::type_config::{Allowlist, TypeConfig};
 
 #[derive(PartialEq, Clone, Debug, Hash)]
 pub enum UnsafePolicy {
@@ -83,14 +83,23 @@ impl Parse for IncludeCppConfig {
                 inclusions.push(hdr.value());
             } else {
                 input.parse::<Option<syn::Token![!]>>()?;
-                if ident == "generate" || ident == "generate_pod" {
+                if ident == "generate" {
                     let args;
                     syn::parenthesized!(args in input);
                     let generate: syn::LitStr = args.parse()?;
-                    type_config.allowlist.push(generate.value());
-                    if ident == "generate_pod" {
-                        type_config.pod_requests.push(generate.value());
+                    if !matches!(type_config.allowlist, Allowlist::Specific(..)) {
+                        type_config.allowlist = Allowlist::Specific(Vec::new());
                     }
+                    if let Allowlist::Specific(list) = &mut type_config.allowlist {
+                        list.push(generate.value());
+                    } else {
+                        panic!("unreachable")
+                    }
+                } else if ident == "generate_pod" {
+                    let args;
+                    syn::parenthesized!(args in input);
+                    let generate_pod: syn::LitStr = args.parse()?;
+                    type_config.pod_requests.push(generate_pod.value());
                 } else if ident == "block" {
                     let args;
                     syn::parenthesized!(args in input);
@@ -98,6 +107,8 @@ impl Parse for IncludeCppConfig {
                     type_config.blocklist.push(generate.value());
                 } else if ident == "parse_only" {
                     parse_only = true;
+                } else if ident == "generate_all" {
+                    type_config.allowlist = Allowlist::All;
                 } else if ident == "exclude_utilities" {
                     type_config.exclude_utilities = true;
                 } else if ident == "safety" {
