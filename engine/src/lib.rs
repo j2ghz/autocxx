@@ -373,6 +373,7 @@ impl IncludeCppEngine {
             return Err(Error::NoGenerationRequested);
         }
         let mod_name = self.get_mod_name();
+        let mod_name_str = mod_name.to_string();
 
         let mut builder = self.make_bindgen_builder(&inc_dirs, &extra_clang_args);
         if let Some(dep_recorder) = dep_recorder {
@@ -386,7 +387,11 @@ impl IncludeCppEngine {
         let bindings = builder.generate().map_err(Error::Bindgen)?;
         let bindings = self.parse_bindings(bindings)?;
 
-        let converter = BridgeConverter::new(&self.config.inclusions, &self.config.type_config);
+        let converter = BridgeConverter::new(
+            &self.config.inclusions,
+            &self.config.type_config,
+            &mod_name_str,
+        );
 
         let conversion = converter
             .convert(

@@ -115,6 +115,7 @@ fn remove_nones<T>(input: Vec<Option<T>>) -> Vec<T> {
 pub(crate) struct RsCodeGenerator<'a> {
     include_list: &'a [String],
     bindgen_mod: ItemMod,
+    mod_name: &'a str,
 }
 
 impl<'a> RsCodeGenerator<'a> {
@@ -123,10 +124,12 @@ impl<'a> RsCodeGenerator<'a> {
         all_apis: Vec<Api<FnAnalysis>>,
         include_list: &'a [String],
         bindgen_mod: ItemMod,
+        mod_name: &'a str,
     ) -> Vec<Item> {
         let c = Self {
             include_list,
             bindgen_mod,
+            mod_name,
         };
         c.rs_codegen(all_apis)
     }
@@ -217,7 +220,7 @@ impl<'a> RsCodeGenerator<'a> {
 
     fn build_include_foreign_items(&self, has_additional_cpp_needs: bool) -> Vec<ForeignItem> {
         let extra_inclusion = if has_additional_cpp_needs {
-            Some("autocxxgen.h".to_string())
+            Some(format!("autocxxgen_{}.h", self.mod_name))
         } else {
             None
         };

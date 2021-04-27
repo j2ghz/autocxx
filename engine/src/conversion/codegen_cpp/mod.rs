@@ -82,22 +82,25 @@ struct AdditionalFunction {
 pub(crate) struct CppCodeGenerator {
     additional_functions: Vec<AdditionalFunction>,
     inclusions: String,
+    mod_name: String,
 }
 
 impl CppCodeGenerator {
     pub(crate) fn generate_cpp_code(
         inclusions: String,
         apis: &[Api<FnAnalysis>],
+        mod_name: String,
     ) -> Result<Option<CppFilePair>, ConvertError> {
-        let mut gen = CppCodeGenerator::new(inclusions);
+        let mut gen = CppCodeGenerator::new(inclusions, mod_name);
         gen.add_needs(apis.iter().filter_map(|api| api.additional_cpp()))?;
         Ok(gen.generate())
     }
 
-    fn new(inclusions: String) -> Self {
+    fn new(inclusions: String, mod_name: String) -> Self {
         CppCodeGenerator {
             additional_functions: Vec::new(),
             inclusions,
+            mod_name,
         }
     }
 
@@ -138,10 +141,11 @@ impl CppCodeGenerator {
                 headers, self.inclusions, type_definitions, declarations
             );
             log::info!("Additional C++ decls:\n{}", declarations);
+            let header_name = format!("autocxxgen_{}.h", self.mod_name);
             Some(CppFilePair {
                 header: declarations.into_bytes(),
                 implementation: None,
-                header_name: "autocxxgen.h".into(),
+                header_name,
             })
         }
     }
