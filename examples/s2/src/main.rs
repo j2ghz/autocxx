@@ -22,10 +22,6 @@ include_cpp! {
     // which means the functions themselves do not need to be marked
     // as unsafe. Other policies are possible.
     safety!(unsafe)
-    // What types and functions we want to generate
-    generate!("R1Interval")
-    generate!("R2Rect")
-    generate!("describe_point")
 }
 
 // Everything that we care about is inlined, so we don't have to do
